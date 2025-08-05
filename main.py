@@ -267,10 +267,8 @@ def handle_message(update: Update, context: CallbackContext) -> None:
 
 def main() -> None:
     """Start the bot."""
-    makedirs('data', exist_ok=True)
-    persistence = PicklePersistence(filename='data/persistence')
-
-    updater = Updater(BOT_TOKEN, persistence=persistence)
+    # makedirs('data', exist_ok=True)
+    updater = Updater(BOT_TOKEN)
 
     dispatcher = updater.dispatcher
     bot = dispatcher.bot
