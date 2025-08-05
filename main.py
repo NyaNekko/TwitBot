@@ -274,7 +274,7 @@ def main() -> None:
     bot = dispatcher.bot
 
 
-    dispatcher.add_handler(CommandHandler("start", start))
+    # dispatcher.add_handler(CommandHandler("start", start))
 
     if IS_BOT_PRIVATE:
         dispatcher.add_handler(MessageHandler(~Filters.chat(DEVELOPER_ID), deny_access))
