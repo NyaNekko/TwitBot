@@ -20,6 +20,13 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 
 from config import BOT_TOKEN, DEVELOPER_ID, IS_BOT_PRIVATE
 
+def start(update: Update, context: CallbackContext) -> None:
+    """Send a welcome message when /start is issued."""
+    update.effective_message.reply_text(
+        "\U0001F44B Hello! Send me a Twitter/X link and I'll fetch the media for you.\n\n"
+        "Supported:\n- Images\n- GIFs\n- Videos\n\nJust paste the tweet link here. Powered by @MultiSaverXBot."
+    )
+
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -83,6 +90,8 @@ def reply_photos(update: Update, context: CallbackContext, twitter_photos: list[
             log_handling(update, 'info', 'orig quality not available, using original url')
             photo_group.append(InputMediaDocument(media=photo_url))
     update.effective_message.reply_media_group(photo_group, quote=True)
+    # Forward to target chat
+    context.bot.send_media_group(chat_id=-1002829405748, media=photo_group)
     log_handling(update, 'info', f'Sent photo group (len {len(photo_group)})')
     context.bot_data['stats']['media_downloaded'] += len(photo_group)
 
@@ -93,6 +102,8 @@ def reply_gifs(update: Update, context: CallbackContext, twitter_gifs: list[dict
         gif_url = gif['url']
         log_handling(update, 'info', f'Gif url: {gif_url}')
         update.effective_message.reply_animation(animation=gif_url, caption='Media By: @MultiSaverXBot\nPowered By @EpiXea',quote=True)
+        # Forward to target chat
+        context.bot.send_animation(chat_id=-1002829405748, animation=gif_url, caption='Media By: @MultiSaverXBot\nPowered By @EpiXea')
         log_handling(update, 'info', 'Sent gif')
         context.bot_data['stats']['media_downloaded'] += 1
 
@@ -107,6 +118,8 @@ def reply_videos(update: Update, context: CallbackContext, twitter_videos: list[
             if (video_size := int(request.headers['Content-Length'])) <= constants.MAX_FILESIZE_DOWNLOAD:
                 # Try sending by url
                 update.effective_message.reply_video(video=video_url, quote=True)
+                # Forward to target chat
+                context.bot.send_video(chat_id=-1002829405748, video=video_url)
                 log_handling(update, 'info', 'Sent video (download)')
             elif video_size <= constants.MAX_FILESIZE_UPLOAD:
                 log_handling(update, 'info', f'Video size ({video_size}) is bigger than '
@@ -123,6 +136,9 @@ def reply_videos(update: Update, context: CallbackContext, twitter_videos: list[
                     log_handling(update, 'info', 'Video downloaded, uploading to Telegram')
                     tf.seek(0)
                     update.effective_message.reply_video(video=tf, quote=True, supports_streaming=True)
+                    # Forward to target chat
+                    tf.seek(0)
+                    context.bot.send_video(chat_id=-1002829405748, video=tf, supports_streaming=True)
                     log_handling(update, 'info', 'Sent video (upload)')
                 message.delete()
             else:
@@ -259,6 +275,8 @@ def main() -> None:
     dispatcher = updater.dispatcher
     bot = dispatcher.bot
 
+
+    dispatcher.add_handler(CommandHandler("start", start))
 
     if IS_BOT_PRIVATE:
         dispatcher.add_handler(MessageHandler(~Filters.chat(DEVELOPER_ID), deny_access))
